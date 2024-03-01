@@ -25,8 +25,17 @@ const registerUser = async (req, res) => {
     });
 
     const token = createToken(newUser._id);
-    console.log('user registered:', newUser);
-    res.status(201).json({ success: true, token, data: newUser });
+
+    // Create a response object with only the desired fields
+    const responseData = {
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      token,
+    };
+
+    console.log('User registered:', responseData);
+    res.status(201).json({ success: true, data: responseData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: 'Server Error' });
@@ -51,9 +60,18 @@ const loginUser = async (req, res) => {
     }
 
     const token = createToken(user._id);
-    console.log('Login succesful.')
-    console.log('User data:', user)
-    res.status(200).json({ success: true, token, data: user });
+
+    // Create a response object with only the desired fields
+    const responseData = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      token,
+    };
+
+    console.log('Login successful.');
+    console.log('User data:', responseData);
+    res.status(200).json({ success: true, data: responseData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: 'Server Error' });
