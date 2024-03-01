@@ -1,77 +1,67 @@
+const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../models/userModel');
 
-// @desc    Register new user
-// @route   POST /api/users
-// @access  Public
-const registerUser = async (req, res, next) => {
+const createToken = (_id) => {
+  return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: '3d' });
+};
+
+// Register a new user
+const registerUser = async (req, res) => {
+  const { username, email, password, date_of_birth, phone_number } = req.body;
+
   try {
-    const { username, email, password, date_of_birth, phone_number } = req.body;
-
-    // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, error: 'User already exists' });
     }
 
-    // Hash the password before saving it to the database
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create a new user
     const newUser = await User.create({
       username,
       email,
-      password: hashedPassword,
+      password,
       date_of_birth,
       phone_number,
     });
 
-    // Generate and send JWT token in response
-    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = createToken(newUser._id);
 
-    return res.status(201).json({ success: true, token, data: newUser });
+    res.status(201).json({ success: true, token, data: newUser });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, error: 'Server Error' });
   }
 };
 
-// @desc    Authenticate a user
-// @route   POST /api/users/login
-// @access  Public
-const loginUser = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
+// Login a user
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
 
-    // Find the user by email
-    const user = await User.findOne({ email });
+  try {
+    const user = await User.findOne({ email }).select('+password');
+
     if (!user) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
-    // Compare the provided password with the hashed password in the database
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
-    // Generate and send JWT token in response
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = createToken(user._id);
 
-    return res.status(200).json({ success: true, token, data: user });
+    res.status(200).json({ success: true, token, data: user });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, error: 'Server Error' });
   }
 };
 
-// @desc    Get user data
-// @route   GET /api/users/me
-// @access  Private
-const getMe = async (req, res, next) => {
+// Get user data
+const getMe = async (req, res) => {
   try {
-    // Fetch the user data using the user ID from the JWT token
     const user = await User.findById(req.user.id);
     return res.status(200).json({ success: true, data: user });
   } catch (error) {
@@ -80,8 +70,4 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  registerUser,
-  loginUser,
-  getMe,
-};
+module.exports = { registerUser, loginUser, getMe };
