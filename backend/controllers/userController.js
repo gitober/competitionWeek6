@@ -30,17 +30,6 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Phone number already exists' });
     }
 
-    // Validate password strength
-    const isPasswordStrong = validator.isStrongPassword(password, { minLength: 8 });
-    if (!isPasswordStrong) {
-      return res.status(400).json({
-        success: false,
-        error: 'Password does not meet the strength requirements',
-        details: {
-        password: 'Password must be at least 8 characters long and include numbers, letters, and symbols.',
-        },
-  });
-}
 
     const newUser = await User.create({
       username,

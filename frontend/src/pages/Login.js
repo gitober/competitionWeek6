@@ -1,28 +1,20 @@
-import React, { useState } from 'react';
-import { useLogin } from '../hooks/useLogin'; // Update import statement
+import React from 'react';
+import useLogin from '../hooks/useLogin';
 import useField from '../hooks/useField';
 
 const Login = ({ setIsAuthenticated }) => {
-  // State variables to manage form fields
-  const email = useField('');
+  const username = useField('');
   const password = useField('');
-  const [error, setError] = useState(null);
-  const { login, isLoading } = useLogin(); // Use the useLogin hook
+  const { login, isLoading, error } = useLogin();
 
-  // Function to handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError(null);
 
     try {
-      // Call the login function from the useLogin hook
-      await login(email.value, password.value);
-
-      // Set user authentication status if login was successful
+      await login(username.value, password.value);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Error during login:', error);
-      setError('An error occurred during login. Please try again later.');
     }
   };
 
@@ -30,10 +22,10 @@ const Login = ({ setIsAuthenticated }) => {
     <form className="login" onSubmit={handleSubmit}>
       <h3>Log In</h3>
 
-      <label>Email:</label>
+      <label>Username:</label>
       <input
         type="text"
-        {...email}
+        {...username}
         autoComplete="username"
       />
 
@@ -45,7 +37,9 @@ const Login = ({ setIsAuthenticated }) => {
       />
 
       {error && <div className="error">{error}</div>}
-      <button type="submit" disabled={isLoading}>Log In</button> {/* Disable button during loading */}
+      <button type="submit" disabled={isLoading}>
+        Log In
+      </button>
     </form>
   );
 };
