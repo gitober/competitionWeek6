@@ -19,9 +19,17 @@ const userSchema = mongoose.Schema(
       required: true,
       select: false, // Ensure the password is not returned by default in queries
     },
+    date_of_birth: {
+      type: Date,
+      required: true,
+    },
+    phone_number: {
+      type: String,
+      required: true,
+    },
   },
   {
-    timestamps: true, 
+    timestamps: true,
   }
 );
 

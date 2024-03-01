@@ -7,7 +7,7 @@ const User = require('../models/userModel');
 // @access  Public
 const registerUser = async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, date_of_birth, phone_number } = req.body;
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
@@ -19,11 +19,17 @@ const registerUser = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user
-    const newUser = await User.create({ username, email, password: hashedPassword });
+    const newUser = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      date_of_birth,
+      phone_number,
+    });
 
     // Generate and send JWT token in response
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    
+
     return res.status(201).json({ success: true, token, data: newUser });
   } catch (error) {
     console.error(error);
