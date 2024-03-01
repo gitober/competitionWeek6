@@ -13,8 +13,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/goals", require("./routes/goalRoutes"));
-app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api", require("./routes/goalRoutes"));
+app.use("/api", require("./routes/userRoutes"));
 
 // Serve frontend
 app.get("/", (req, res) => res.send("Server running"));
