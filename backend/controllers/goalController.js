@@ -6,7 +6,9 @@ const User = require('../models/userModel');
 // @access  Private
 const getGoals = async (req, res, next) => {
   try {
-    const goals = await Goal.find({ userId: req.user.id });
+    // Assuming the user's ID is stored in req.user._id after authentication
+    const goals = await Goal.find({ user: req.user._id });
+    console.log('Received data:', req.body)
     return res.status(200).json({ success: true, data: goals });
   } catch (error) {
     console.error(error);
@@ -19,7 +21,9 @@ const getGoals = async (req, res, next) => {
 // @access  Private
 const setGoal = async (req, res, next) => {
   try {
-    const newGoal = await Goal.create({ userId: req.user.id, ...req.body });
+    // Ensure the goal is associated with the authenticated user's ID
+    const newGoal = await Goal.create({ user: req.user._id, ...req.body });
+    console.log('Created goal:', newGoal)
     return res.status(201).json({ success: true, data: newGoal });
   } catch (error) {
     console.error(error);
@@ -32,11 +36,18 @@ const setGoal = async (req, res, next) => {
 // @access  Private
 const updateGoal = async (req, res, next) => {
   try {
-    const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedGoal) {
+    // Find the goal by ID and ensure it belongs to the user before updating
+    const goal = await Goal.findOne({ _id: req.params.id, user: req.user._id });
+    console.log('Received data:', req.body);
+    
+    if (!goal) {
       return res.status(404).json({ success: false, error: 'Goal not found' });
     }
+
+    const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    console.log('Updated goal:', updatedGoal)
     return res.status(200).json({ success: true, data: updatedGoal });
+    
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, error: 'Server Error' });
@@ -48,16 +59,27 @@ const updateGoal = async (req, res, next) => {
 // @access  Private
 const deleteGoal = async (req, res, next) => {
   try {
-    const deletedGoal = await Goal.findByIdAndDelete(req.params.id);
-    if (!deletedGoal) {
+    
+    const goal = await Goal.findOne({ _id: req.params.id, user: req.user._id });
+
+    if (!goal) {
       return res.status(404).json({ success: false, error: 'Goal not found' });
     }
-    return res.status(200).json({ success: true, data: {} });
+
+    
+    console.log("Deleted goal:", goal);
+
+    
+    await Goal.findByIdAndDelete(req.params.id);
+
+    
+    return res.status(200).json({ success: true, data: goal });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, error: 'Server Error' });
   }
 };
+
 
 module.exports = {
   getGoals,

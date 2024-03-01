@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
-// Assuming you have your JWT secret key stored in your environment variables
 const secretKey = process.env.JWT_SECRET;
 
 const protect = async (req, res, next) => {
@@ -16,17 +15,19 @@ const protect = async (req, res, next) => {
             const decoded = jwt.verify(token, secretKey);
 
             // Find user by ID (excluding the password from the result)
-            req.user = await User.findById(decoded.id).select('-password');
+            req.user = await User.findById(decoded._id).select('-password');
+
+            if (!req.user) {
+                return res.status(401).json({ message: 'Not authorized, user not found' });
+            }
 
             next();
         } catch (error) {
             console.error('Authentication error:', error);
-            res.status(401).json({ message: 'Not authorized, token failed' });
+            return res.status(401).json({ message: 'Not authorized, token failed' });
         }
-    }
-
-    if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
+    } else {
+        return res.status(401).json({ message: 'Not authorized, no token' });
     }
 };
 
