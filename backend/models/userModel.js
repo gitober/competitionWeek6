@@ -17,7 +17,7 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
-      select: false, // Ensure the password is not returned by default in queries
+      select: false, 
     },
     date_of_birth: {
       type: Date,
