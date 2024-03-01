@@ -1,51 +1,51 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { useLogin } from '../hooks/useLogin'; // Update import statement
+import useField from '../hooks/useField';
 
-const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const Login = ({ setIsAuthenticated }) => {
+  // State variables to manage form fields
+  const email = useField('');
+  const password = useField('');
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const { login, isLoading } = useLogin(); // Use the useLogin hook
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Function to handle form submission
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError(null);
-    setLoading(true);
 
     try {
-      // Make API request to log in user
-      const response = await fetch("/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+      // Call the login function from the useLogin hook
+      await login(email.value, password.value);
 
-      if (!response.ok) {
-        throw new Error("Login failed");
-      }
-
-      // Redirect or handle successful login
-
+      // Set user authentication status if login was successful
+      setIsAuthenticated(true);
     } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+      console.error('Error during login:', error);
+      setError('An error occurred during login. Please try again later.');
     }
   };
 
   return (
     <form className="login" onSubmit={handleSubmit}>
       <h3>Log In</h3>
-      {error && <div className="error">{error}</div>}
+
       <label>Email:</label>
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input
+        type="text"
+        {...email}
+        autoComplete="username"
+      />
+
       <label>Password:</label>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit" disabled={loading}>Log in</button>
+      <input
+        type="password"
+        {...password}
+        autoComplete="current-password"
+      />
+
+      {error && <div className="error">{error}</div>}
+      <button type="submit" disabled={isLoading}>Log In</button> {/* Disable button during loading */}
     </form>
   );
 };

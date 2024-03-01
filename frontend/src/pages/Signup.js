@@ -1,79 +1,99 @@
-import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import useSignup from "../hooks/useSignup";
+import useField from "../hooks/useField";
 
-const Signup = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [dob, setDob] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+const Signup = ({ setIsAuthenticated }) => {
+  const navigate = useNavigate();
+  const username = useField("");
+  const email = useField("");
+  const password = useField("");
+  const dob = useField(""); // Add useField for date of birth
+  const phone = useField(""); // Add useField for phone number
+  // const [error, setError] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      // Make API request to register user
-      const response = await fetch("/api/users/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          dob,
-          phoneNumber,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Sign up failed");
-      }
-
-      // If sign up successful, log in the user
-      const loginResponse = await fetch("/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      if (!loginResponse.ok) {
-        throw new Error("Login failed");
-      }
-
-      // Redirect or handle successful login
-
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { signup, error } = useSignup(setIsAuthenticated, navigate);
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    console.log(username.value, email.value, password.value, dob.value, phone.value);
+    signup(username.value, email.value, password.value, dob.value, phone.value);
+  }
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   setError(null);
+  //   try {
+  //     const response = await fetch("/api/users/register", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         username: username.value,
+  //         email: email.value,
+  //         password: password.value,
+  //         dob: dob.value, // Include date of birth
+  //         phone_number: phone.value, // Include phone number
+  //       }),
+  //     });
+      
+  //     if (response.ok) {
+  //       console.log("Signup successful");
+  //       const data = await response.json();
+  //       setIsAuthenticated(true);
+  //       navigate("/");
+  //     } else { 
+  //       const errorData = await response.json();
+  //       setError(errorData.error);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error during signup:", error);
+  //     setError("An error occurred during signup. Please try again later.");
+  //   }
+  // };
 
   return (
     <form className="signup" onSubmit={handleSubmit}>
       <h3>Sign Up</h3>
+
+      <label>
+        Username:
+        <input
+          type="text"
+          {...username}
+          autoComplete="username"
+        />
+      </label>
+      <label>
+        Email address:
+        <input
+          type="text"
+          {...email}
+          autoComplete="email"
+        />
+      </label>
+      <label>
+        Password:
+        <input
+          type="password"
+          {...password}
+          autoComplete="new-password"
+        />
+      </label>
+      <label>
+        Date of birth:
+        <input 
+          type="date" 
+          {...dob}
+        />
+      </label>
+      <label>
+        Phone number:
+        <input 
+          type="text" 
+          {...phone}
+        />      
+      </label>
       {error && <div className="error">{error}</div>}
-      <label>Username:</label>
-      <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
-      <label>Email address:</label>
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <label>Password:</label>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <label>Date of birth:</label>
-      <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
-      <label>Phone number:</label>
-      <input type="text" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-      <button type="submit" disabled={loading}>Sign up</button>
+      <button type="submit">Sign up</button>
     </form>
   );
 };

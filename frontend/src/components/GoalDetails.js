@@ -1,30 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
 import formatDistanceToNow from "date-fns/formatDistanceToNow";
 
 const GoalDetails = ({ goal, onDelete }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   const handleDelete = async () => {
-    setLoading(true);
-    setError(null);
-
     try {
-      // Make API request to delete the goal
+      // Make DELETE request to delete the goal
       const response = await fetch(`/api/goals/${goal.id}`, {
         method: "DELETE",
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete goal");
+      if (response.ok) {
+        // Trigger a function to update the UI after successful deletion
+        onDelete(goal.id);
+      } else {
+        console.error("Failed to delete goal");
       }
-
-      // Call the onDelete callback to update the UI
-      onDelete(goal.id);
     } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+      console.error("Error deleting goal:", error);
     }
   };
 
@@ -36,10 +27,7 @@ const GoalDetails = ({ goal, onDelete }) => {
         Due Date: {formatDistanceToNow(new Date(goal.dueDate), { addSuffix: true })}<br />
         Priority: {goal.priority}
       </p>
-      <button onClick={handleDelete} disabled={loading}>
-        {loading ? "Deleting..." : "Delete"}
-      </button>
-      {error && <div className="error">{error}</div>}
+      <span className="material-symbols-outlined" onClick={handleDelete}>delete</span>
     </div>
   );
 };
