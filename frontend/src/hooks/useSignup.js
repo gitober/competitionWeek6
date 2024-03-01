@@ -57,7 +57,7 @@ const useSignup = () => {
     }
   };
 
-  return { username, email, password, dob, phone, signup, isLoading, error, isAuthenticated, setError };
+  return { username, email, password, dob, phone, signup, isLoading, error, isAuthenticated, setIsAuthenticated, setError }; // Return setIsAuthenticated function
 };
 
 export default useSignup;
