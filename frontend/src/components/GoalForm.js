@@ -1,33 +1,33 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-const GoalForm = ({ onAdd }) => {
-  const [text, setText] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [priority, setPriority] = useState("");
+const GoalForm = ({ authToken, onCreateGoal }) => {
+  const [text, setText] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [priority, setPriority] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Make POST request to create a new goal
-      const response = await fetch("/api/goals", {
-        method: "POST",
+      const response = await fetch('/api/goals', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ text, dueDate, priority }),
       });
       if (response.ok) {
-        // Trigger a function to update the UI after successful creation
-        onAdd();
-        // Clear input fields after successful creation
-        setText("");
-        setDueDate("");
-        setPriority("");
+        // Goal creation successful, handle success
+        console.log('Goal created successfully');
+
+        // Call the provided onCreateGoal function to handle goal creation in the parent component
+        onCreateGoal({ text, dueDate, priority });
       } else {
-        console.error("Failed to add goal");
+        // Goal creation failed, handle error
+        console.error('Failed to create goal');
       }
     } catch (error) {
-      console.error("Error adding goal:", error);
+      console.error('Error creating goal:', error);
     }
   };
 
@@ -41,7 +41,7 @@ const GoalForm = ({ onAdd }) => {
       <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
       <label>Priority:</label>
       <input type="text" value={priority} onChange={(e) => setPriority(e.target.value)} />
-      <button>Add Goal</button>
+      <button type="submit">Add Goal</button>
     </form>
   );
 };

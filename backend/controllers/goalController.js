@@ -1,89 +1,56 @@
 const Goal = require('../models/goalModel');
-const User = require('../models/userModel');
 
-// @desc    Get goals
-// @route   GET /api/goals
-// @access  Private
-const getGoals = async (req, res, next) => {
+const getGoals = async (req, res) => {
   try {
-    // Assuming the user's ID is stored in req.user._id after authentication
     const goals = await Goal.find({ user: req.user._id });
-    console.log('Received data:', req.body)
-    return res.status(200).json({ success: true, data: goals });
+    res.status(200).json(goals);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// @desc    Set goal
-// @route   POST /api/goals
-// @access  Private
-const setGoal = async (req, res, next) => {
+const createGoal = async (req, res) => {
+  const { text, dueDate, priority } = req.body;
+
   try {
-    // Ensure the goal is associated with the authenticated user's ID
-    const newGoal = await Goal.create({ user: req.user._id, ...req.body });
-    console.log('Created goal:', newGoal)
-    return res.status(201).json({ success: true, data: newGoal });
+    console.log('User ID from token:', req.user._id);
+
+    const goal = await Goal.create({
+      text,
+      dueDate,
+      priority,
+      user: req.user._id,
+    });
+
+    res.status(201).json(goal);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(400).json({ error: error.message });
   }
 };
 
-// @desc    Update goal
-// @route   PUT /api/goals/:id
-// @access  Private
-const updateGoal = async (req, res, next) => {
+const updateGoal = async (req, res) => {
+  const { text, dueDate, priority } = req.body;
+
   try {
-    // Find the goal by ID and ensure it belongs to the user before updating
-    const goal = await Goal.findOne({ _id: req.params.id, user: req.user._id });
-    console.log('Received data:', req.body);
-    
-    if (!goal) {
-      return res.status(404).json({ success: false, error: 'Goal not found' });
-    }
+    const goal = await Goal.findByIdAndUpdate(
+      req.params.id,
+      { text, dueDate, priority },
+      { new: true }
+    );
 
-    const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    console.log('Updated goal:', updatedGoal)
-    return res.status(200).json({ success: true, data: updatedGoal });
-    
+    res.status(200).json(goal);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(400).json({ error: error.message });
   }
 };
 
-// @desc    Delete goal
-// @route   DELETE /api/goals/:id
-// @access  Private
-const deleteGoal = async (req, res, next) => {
+const deleteGoal = async (req, res) => {
   try {
-    
-    const goal = await Goal.findOne({ _id: req.params.id, user: req.user._id });
-
-    if (!goal) {
-      return res.status(404).json({ success: false, error: 'Goal not found' });
-    }
-
-    
-    console.log("Deleted goal:", goal);
-
-    
-    await Goal.findByIdAndDelete(req.params.id);
-
-    
-    return res.status(200).json({ success: true, data: goal });
+    const deletedGoal = await Goal.findByIdAndDelete(req.params.id);
+    res.status(200).json({ _id: deletedGoal._id });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(400).json({ error: error.message });
   }
 };
 
-
-module.exports = {
-  getGoals,
-  setGoal,
-  updateGoal,
-  deleteGoal,
-};
+module.exports = { getGoals, createGoal, updateGoal, deleteGoal };

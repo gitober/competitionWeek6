@@ -1,7 +1,10 @@
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import Logout from '../pages/Logout'; 
 
 const Navbar = () => {
   const flag = false;
+
   return (
     <header>
       <div className="container">
@@ -19,6 +22,7 @@ const Navbar = () => {
             <div>
               <Link to="/login">Login</Link>
               <Link to="/signup">Signup</Link>
+              <Logout />
             </div>
           )}
         </nav>

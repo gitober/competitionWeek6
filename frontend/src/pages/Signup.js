@@ -1,77 +1,72 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import useSignup from '../hooks/useSignup';
+import { useField } from '../hooks/useField';
+import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
+  // Initialize form fields using the useField hook
+  const usernameField = useField('text');
+  const emailField = useField('email');
+  const passwordField = useField('password');
+  const dateOfBirthField = useField('date');
+  const phoneNumberField = useField('text');
+
+  // Access the navigation function from React Router
   const navigate = useNavigate();
-  // Removed setIsAuthenticated from the destructured variables as it's not returned by useSignup
-  const { username, email, password, dob, phone, signup, isLoading, error } = useSignup();
-  const [isFormSubmitting, setIsFormSubmitting] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  // Use the useSignup hook to manage signup functionality
+  const { signup, isLoading, error } = useSignup('/api/register'); // Pass your signup endpoint
 
-    if (isFormSubmitting) return;
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    setIsFormSubmitting(true);
+    // Prepare user data from form fields
+    const userData = {
+      username: usernameField.value,
+      email: emailField.value,
+      password: passwordField.value,
+      date_of_birth: dateOfBirthField.value,
+      phone_number: phoneNumberField.value,
+    };
 
     try {
-      // Your validation logic here
-      if (!username.value || !email.value || !password.value || !dob.value || !phone.value) {
-        throw new Error('All fields are required.');
-      }
+      // Call the signup function from the useSignup hook
+      const user = await signup(userData);
 
-      const response = await signup();
-      
-      // Assuming signup function directly updates isAuthenticated within the hook
-      if (response && response.success) {
-        // Optionally, redirect or perform additional actions upon successful signup
-        navigate('/'); // Redirect to the homepage or dashboard as appropriate
+      if (user) {
+        console.log('Signup successful:', user);
+        // Navigate to the login page upon successful signup
+        navigate('/login');
       } else {
-        // Handle server response error
-        console.error('Signup failed:', response.error || 'Unknown error');
+        console.error('Signup failed');
       }
     } catch (error) {
-      console.error('Signup failed:', error.message);
-      // Assuming setError is meant to handle form submission errors
-    } finally {
-      setIsFormSubmitting(false);
+      console.error('Error signing up:', error);
     }
   };
 
-  // Basic form structure
   return (
-    <div>
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : (
-        <form className="signup" onSubmit={handleSubmit}>
-          <label>
-            Username:
-            <input type="text" {...username} autoComplete="username" />
-          </label>
-          <label>
-            Email:
-            <input type="email" {...email} autoComplete="email" />
-          </label>
-          <label>
-            Password:
-            <input type="password" {...password} autoComplete="new-password" />
-          </label>
-          <label>
-            Date of Birth:
-            <input type="date" {...dob} />
-          </label>
-          <label>
-            Phone:
-            <input type="tel" {...phone} />
-          </label>
-          
-          {error && <div className="error">{error}</div>}
-          <button type="submit" disabled={isLoading || isFormSubmitting}>Sign up</button>
-        </form>
-      )}
-    </div>
+    <form className="signup" onSubmit={handleSubmit}>
+      <h3>Sign Up</h3>
+      {/* Render input fields using spread attributes from useField */}
+      <label>Username:</label>
+      <input {...usernameField} />
+      <label>Email address:</label>
+      <input {...emailField} />
+      <label>Password:</label>
+      <input {...passwordField} />
+      <label>Date of birth:</label>
+      <input {...dateOfBirthField} />
+      <label>Phone number:</label>
+      <input {...phoneNumberField} />
+      {/* Disable the button when the form is submitting */}
+      <button type="submit" disabled={isLoading}>
+        Sign up
+      </button>
+      {/* Display error message if there's an error */}
+      {error && <div className="error">{error}</div>}
+    </form>
   );
 };
 

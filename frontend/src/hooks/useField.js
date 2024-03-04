@@ -1,16 +1,11 @@
 import { useState } from "react";
 
-const useField = (initialValue) => {
-  const [value, setValue] = useState(initialValue);
+export const useField = (type) => {
+  const [value, setValue] = useState("");
 
-  const handleChange = (e) => {
+  const onChange = (e) => {
     setValue(e.target.value);
   };
 
-  return {
-    value,
-    onChange: handleChange,
-  };
+  return { type, value, onChange };
 };
-
-export default useField;

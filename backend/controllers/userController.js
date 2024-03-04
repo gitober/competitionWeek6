@@ -1,110 +1,75 @@
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const validator = require('validator');
+const bcrypt = require('bcrypt');
 
 const createToken = (_id) => {
-  return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: '3d' });
+  return jwt.sign({ _id }, process.env.SECRET, { expiresIn: '3d' });
 };
 
-// Register a new user
-const registerUser = async (req, res) => {
-  const { username, email, password, date_of_birth, phone_number } = req.body;
-
+const signupUser = async (req, res) => {
   try {
-    // Check if username already exists
-    const existingUsername = await User.findOne({ username });
-    if (existingUsername) {
-      return res.status(400).json({ success: false, error: 'Username already exists' });
+    // Extract user data from the request body
+    const { username, email, password, date_of_birth, phone_number, role } = req.body;
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists with this email' });
     }
 
-    // Check if email already exists
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      return res.status(400).json({ success: false, error: 'Email already exists' });
-    }
-
-    // Check if phone number already exists
-    const existingPhoneNumber = await User.findOne({ phone_number });
-    if (existingPhoneNumber) {
-      return res.status(400).json({ success: false, error: 'Phone number already exists' });
-    }
-
-
-    const newUser = await User.create({
+    // Create a new user with the provided data, including the role
+    const user = new User({
       username,
       email,
-      password,
+      password, 
       date_of_birth,
       phone_number,
+      roles: role ? [role] : ['user'], // Set the role to 'user' if not provided
     });
 
-    const token = createToken(newUser._id);
+    // Save the user to the database
+    await user.save();
 
-    const responseData = {
-      _id: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
-      token,
-    };
-
-    console.log('User registered:', responseData);
-    res.status(201).json({ success: true, data: responseData });
+    // Return user information (no token is generated during signup)
+    res.status(201).json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+    });
   } catch (error) {
     console.error(error);
-
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ success: false, error: 'Validation error', details: error.errors });
-    }
-
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// Login a user
 const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username }).select('+password');
+    const user = await User.findOne({ username });
+    if (!user) throw new Error('Incorrect username');
 
-    if (!user) {
-      return res.status(401).json({ success: false, error: 'Invalid username' });
-    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) throw new Error('Incorrect password');
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Generate a JWT token for the user during login
+    const token = jwt.sign({ _id: user._id }, process.env.SECRET, { expiresIn: '3h' });
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ success: false, error: 'Invalid password' });
-    }
-
-    const token = createToken(user._id);
-
-    const responseData = {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      token,
-    };
-
-    console.log('Login successful.');
-    console.log('User data:', responseData);
-    res.status(200).json({ success: true, data: responseData });
+    res.status(200).json({ _id: user._id, username, email: user.email, token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(400).json({ error: error.message });
   }
 };
 
-// Get user data
-const getMe = async (req, res) => {
+const getUsers = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    return res.status(200).json({ success: true, data: user });
+    const users = await User.find();
+    
+    res.status(200).json(users);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-module.exports = { registerUser, loginUser, getMe };
+module.exports = { signupUser, loginUser, getUsers };

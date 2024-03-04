@@ -1,124 +1,146 @@
-import React, { useState, useEffect } from "react";
-import GoalDetails from "../components/GoalDetails";
-import GoalForm from "../components/GoalForm";
+import React, { useState, useEffect, useCallback } from 'react';
+import GoalDetails from '../components/GoalDetails';
+import GoalForm from '../components/GoalForm';
 
 const Home = () => {
-  // State to store the fetched goals
   const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [authToken] = useState(localStorage.getItem('authToken'));
+  const [deletedGoalId, setDeletedGoalId] = useState(null);
+  const [setIsFormVisible] = useState(true);
 
-  // Replace 'yourAuthToken' with the actual authentication token
-  const yourAuthToken = localStorage.getItem('authToken');
-
-  // Function to fetch goals from the API
-  const fetchGoals = async () => {
+  const fetchGoals = useCallback(async () => {
     try {
-      const response = await fetch("/api/goals", {
-        method: "GET",
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/goals', {
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${yourAuthToken}`,
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setGoals(data.data);
+        setGoals(data || []);
       } else {
-        console.error("Failed to fetch goals");
+        console.error(`Failed to fetch goals: ${response.status} ${response.statusText}`);
+        setError('Failed to fetch goals. Please try again later.');
       }
     } catch (error) {
-      console.error("Error fetching goals:", error);
+      console.error('Error fetching goals:', error);
+      setError('Error fetching goals. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, [authToken]);
+
+  const handleCreateGoal = async (newGoal) => {
+    try {
+      const response = await fetch('/api/goals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(newGoal),
+      });
+
+      if (response.ok) {
+        const createdGoal = await response.json();
+        setGoals((prevGoals) => [...prevGoals, createdGoal]);
+        console.log('New goal created:', createdGoal);
+
+        // Close the form after creating a new goal
+        setIsFormVisible(false);
+      } else {
+        console.error('Failed to create goal:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error creating goal:', error);
     }
   };
-
-const addGoal = async (newGoal) => {
+  
+  const handleDelete = useCallback(async (goalId) => {
   try {
-    const yourAuthToken = localStorage.getItem('authToken');
-
-    const response = await fetch("/api/goals", {
-      method: "POST",
+    const response = await fetch(`/api/goals/${goalId}`, {
+      method: 'DELETE',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${yourAuthToken}`,
+        Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify(newGoal),
     });
 
     if (response.ok) {
-      // Refetch goals after adding
-      fetchGoals();
+      setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== goalId));
+      console.log('Goal deleted successfully');
+      // Close the form after deleting a goal
+      setIsFormVisible(true);
     } else {
-      console.error("Failed to add goal");
+      console.error('Failed to delete goal:', response.status, response.statusText);
+      const errorData = await response.json();
+      console.error('Error data:', errorData);
     }
   } catch (error) {
-    console.error("Error adding goal:", error);
+    console.error('Error deleting goal:', error);
   }
-};
+}, [setGoals, setIsFormVisible, authToken]);
 
-  // Function to update a goal
-  const updateGoal = async (id, updatedGoal) => {
-    try {
-      const response = await fetch(`/api/goals/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${yourAuthToken}`,
-        },
-        body: JSON.stringify(updatedGoal),
-      });
-
-      if (response.ok) {
-        // Refetch goals after updating
-        fetchGoals();
-      } else {
-        console.error("Failed to update goal");
-      }
-    } catch (error) {
-      console.error("Error updating goal:", error);
-    }
-  };
-
-  // Function to delete a goal
-  const deleteGoal = async (id) => {
-    try {
-      const response = await fetch(`/api/goals/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${yourAuthToken}`,
-        },
-      });
-
-      if (response.ok) {
-        // Refetch goals after deleting
-        fetchGoals();
-      } else {
-        console.error("Failed to delete goal");
-      }
-    } catch (error) {
-      console.error("Error deleting goal:", error);
-    }
-  };
-
-  // Fetch goals on component mount
   useEffect(() => {
     fetchGoals();
-  }, [fetchGoals]); // Include fetchGoals in the dependency array
+  }, [authToken, fetchGoals]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const DELETE_KEY = 'Delete';
+      if (event.key === DELETE_KEY && goals.length > 0) {
+        handleDelete(goals[0].id || goals[0]._id);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [goals, handleDelete]);
+
+  useEffect(() => {
+    if (deletedGoalId) {
+      const timeoutId = setTimeout(() => {
+        setDeletedGoalId(null);
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [deletedGoalId, setDeletedGoalId]);
 
   return (
     <div className="home">
       <div className="goals">
-        {/* Map through the fetched goals and render GoalDetails component for each */}
-        {goals.map((goal) => (
-          <GoalDetails
-            key={goal._id}
-            goal={goal}
-            onUpdate={(updatedGoal) => updateGoal(goal._id, updatedGoal)}
-            onDelete={() => deleteGoal(goal._id)}
-          />
-        ))}
+        {loading ? (
+          <p>Loading goals...</p>
+        ) : error ? (
+          <p>Error: {error}</p>
+        ) : (
+          goals.map((goal) => (
+            goal.id !== deletedGoalId && (
+              <GoalDetails
+                key={goal.id || goal._id}
+                goal={goal}
+                onDelete={() => handleDelete(goal.id || goal._id)}
+                authToken={authToken}
+                setGoals={setGoals}
+                rerenderKey={Date.now()}
+                closeForm={() => setIsFormVisible(true)}
+              />
+            )
+          ))
+        )}
       </div>
-      <GoalForm onAdd={addGoal} /> {/* Pass addGoal function to update goals after adding */}
+      <GoalForm authToken={authToken} onCreateGoal={handleCreateGoal} />
     </div>
   );
 };

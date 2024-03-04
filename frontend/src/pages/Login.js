@@ -1,20 +1,27 @@
 import React from 'react';
+import { useField } from '../hooks/useField';
+import { useNavigate } from 'react-router-dom';
 import useLogin from '../hooks/useLogin';
-import useField from '../hooks/useField';
 
-const Login = ({ setIsAuthenticated }) => {
-  const username = useField('');
-  const password = useField('');
+const Login = () => {
+  const usernameField = useField('text');
+  const passwordField = useField('password');
+  const navigate = useNavigate();
   const { login, isLoading, error } = useLogin();
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await login(username.value, password.value);
-      setIsAuthenticated(true);
+      const success = await login(usernameField.value, passwordField.value, navigate);
+      if (success) {
+        console.log('Login successful');
+        console.log(localStorage.getItem('authToken')); 
+        navigate('/home')
+      } else {
+        console.error('Login failed');
+      }
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error('Error logging in:', error);
     }
   };
 
@@ -23,23 +30,12 @@ const Login = ({ setIsAuthenticated }) => {
       <h3>Log In</h3>
 
       <label>Username:</label>
-      <input
-        type="text"
-        {...username}
-        autoComplete="username"
-      />
-
+      <input {...usernameField} />
       <label>Password:</label>
-      <input
-        type="password"
-        {...password}
-        autoComplete="current-password"
-      />
+      <input {...passwordField} />
 
-      {error && <div className="error">{error}</div>}
-      <button type="submit" disabled={isLoading}>
-        Log In
-      </button>
+      <button type="submit" disabled={isLoading}>{isLoading ? 'Logging in...' : 'Log in'}</button>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
     </form>
   );
 };

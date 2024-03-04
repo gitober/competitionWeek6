@@ -1,26 +1,11 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const goalSchema = new mongoose.Schema({
-  text: {
-    type: String,
-    required: true
-  },
-  dueDate: {
-    type: Date,
-    required: true
-  },
-  priority: {
-    type: String,
-    required: true,
-    enum: ['Low', 'Medium', 'High'] // Only allows these values
-  },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User' // Assuming you have a User model
-  }
+const goalSchema = new Schema({
+  text: { type: String, required: true },
+  dueDate: { type: Date, required: true },
+  priority: { type: String, required: true },
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
-const Goal = mongoose.model('Goal', goalSchema);
-
-module.exports = Goal;
+module.exports = mongoose.model('Goal', goalSchema);
