@@ -15,7 +15,7 @@ const Signup = () => {
   const navigate = useNavigate();
 
   // Use the useSignup hook to manage signup functionality
-  const { signup, isLoading, error } = useSignup('/api/register'); // Pass your signup endpoint
+  const { signup, isLoading, error } = useSignup('/api/users/register'); // Pass your signup endpoint
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -34,12 +34,12 @@ const Signup = () => {
       // Call the signup function from the useSignup hook
       const user = await signup(userData);
 
-      if (user) {
+      if (!error) {
         console.log('Signup successful:', user);
         // Navigate to the login page upon successful signup
         navigate('/login');
       } else {
-        console.error('Signup failed');
+        console.error('Signup failed:', error);
       }
     } catch (error) {
       console.error('Error signing up:', error);

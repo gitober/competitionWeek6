@@ -9,6 +9,9 @@ const useSignup = (url) => {
       setIsLoading(true);
       setError(null);
 
+      console.log('Sending request to:', url); // Log the URL
+      console.log('Request body:', JSON.stringify(userData)); // Log the request body
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -17,14 +20,19 @@ const useSignup = (url) => {
         body: JSON.stringify(userData),
       });
 
+      console.log('Response status:', response.status); // Log the response status
+
       if (!response.ok) {
-        throw new Error('Signup failed');
+        const errorText = await response.text();
+        throw new Error(`Signup failed: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Response data:', data); // Log the response data
       return data;
     } catch (error) {
-      setError('Signup failed. Please try again.');
+      console.error('Error during signup:', error); // Log the error
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
