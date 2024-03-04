@@ -46,10 +46,21 @@ const updateGoal = async (req, res) => {
 
 const deleteGoal = async (req, res) => {
   try {
-    const deletedGoal = await Goal.findByIdAndDelete(req.params.id);
-    res.status(200).json({ _id: deletedGoal._id });
+    const goalId = req.params.id;
+    console.log('Received goal ID for deletion:', goalId);
+
+    const goal = await Goal.findByIdAndDelete(goalId);
+
+    if (!goal) {
+      console.log('Goal not found');
+      return res.status(404).json({ error: 'Goal not found' });
+    }
+
+    console.log('Goal deleted successfully');
+    res.status(200).json({ message: 'Goal deleted successfully' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error deleting goal:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 

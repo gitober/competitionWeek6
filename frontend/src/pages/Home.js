@@ -8,7 +8,7 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [authToken] = useState(localStorage.getItem('authToken'));
   const [deletedGoalId, setDeletedGoalId] = useState(null);
-  const [setIsFormVisible] = useState(true);
+  const [isFormVisible, setIsFormVisible] = useState(true); // Corrected here
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -63,30 +63,30 @@ const Home = () => {
       console.error('Error creating goal:', error);
     }
   };
-  
-  const handleDelete = useCallback(async (goalId) => {
-  try {
-    const response = await fetch(`/api/goals/${goalId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
 
-    if (response.ok) {
-      setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== goalId));
-      console.log('Goal deleted successfully');
-      // Close the form after deleting a goal
-      setIsFormVisible(true);
-    } else {
-      console.error('Failed to delete goal:', response.status, response.statusText);
-      const errorData = await response.json();
-      console.error('Error data:', errorData);
+  const handleDelete = useCallback(async (goalId) => {
+    try {
+      const response = await fetch(`/api/goals/${goalId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== goalId));
+        console.log('Goal deleted successfully');
+        // Close the form after deleting a goal
+        setIsFormVisible(true);
+      } else {
+        console.error('Failed to delete goal:', response.status, response.statusText);
+        const errorData = await response.json();
+        console.error('Error data:', errorData);
+      }
+    } catch (error) {
+      console.error('Error deleting goal:', error);
     }
-  } catch (error) {
-    console.error('Error deleting goal:', error);
-  }
-}, [setGoals, setIsFormVisible, authToken]);
+  }, [setGoals, setIsFormVisible, authToken]);
 
   useEffect(() => {
     fetchGoals();
@@ -140,7 +140,7 @@ const Home = () => {
           ))
         )}
       </div>
-      <GoalForm authToken={authToken} onCreateGoal={handleCreateGoal} />
+      <GoalForm authToken={authToken} onCreateGoal={handleCreateGoal} isFormVisible={isFormVisible} />
     </div>
   );
 };
